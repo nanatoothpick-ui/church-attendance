@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Church Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" />
+<style>
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e2e0d8;
+    --text: #1a1a18;
+    --muted: #6b6a65;
+    --accent: #2563eb;
+    --accent-light: #eff5ff;
+    --green: #16a34a; --green-light: #f0fdf4;
+    --red: #dc2626;   --red-light: #fff1f2;
+    --amber: #d97706; --amber-light: #fffbeb;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; min-height: 100vh; }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; flex-direction: column; min-height: 100vh; max-width: 900px; margin: 0 auto; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .logo i { color: var(--accent); font-size: 20px; }
+  #headerDate { font-size: 13px; color: var(--muted); }
+  main { flex: 1; padding: 20px 16px; }
+
+  /* ── NAV TABS ── */
+  .tabs { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 20px; overflow-x: auto; }
+  .tab-btn { flex: 1; padding: 8px 10px; border: none; background: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all .15s; }
+  .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .tab-btn i { font-size: 15px; }
+
+  /* ── CARDS & METRICS ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .metric-box .lbl { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 3px; }
+  .metric-box .val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .sec-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+
+  /* ── FORM ELEMENTS ── */
+  input, select, textarea { font-family: inherit; font-size: 14px; padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); width: 100%; outline: none; transition: border .15s; }
+  input:focus, select:focus { border-color: var(--accent); }
+  label { font-size: 13px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 4px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-field { margin-bottom: 10px; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; color: var(--text); }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-danger  { background: var(--red);   color: #fff; border-color: var(--red); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* ── MEMBER ROWS ── */
+  .member-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .member-row:last-child { border-bottom: none; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member-meta { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+  .tag { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 99px; font-size: 10px; font-weight: 500; }
+
+  /* attendance toggle */
+  .att-btn { flex-shrink: 0; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all .15s; }
+  .att-btn.present { background: var(--green-light); color: var(--green); border-color: #bbf7d0; }
+  .att-btn.absent  { background: var(--red-light);   color: var(--red);   border-color: #fecaca; }
+
+  /* ── HISTORY DOTS ── */
+  .hist-dot { width: 22px; height: 22px; border-radius: 4px; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+  .hist-dot.P { background: var(--green-light); color: var(--green); }
+  .hist-dot.A { background: var(--red-light); color: var(--red); }
+  .hist-dot.U { background: var(--surface2); color: var(--muted); }
+
+  /* ── TOAST ── */
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px); background: #1a1a18; color: #fff; padding: 10px 20px; border-radius: 99px; font-size: 13px; opacity: 0; transition: all .3s; pointer-events: none; z-index: 99; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── SETUP SCREEN ── */
+  #setupScreen { position: fixed; inset: 0; background: var(--bg); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 28px; max-width: 480px; width: 100%; }
+  .setup-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .setup-card p  { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .step { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step p { margin: 0; font-size: 13px; color: var(--text); line-height: 1.6; }
+  .step code { font-family: 'DM Mono', monospace; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { height: 4px; border-radius: 99px; background: var(--surface2); overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width .3s; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:520px) {
+    .form-row { grid-template-columns: 1fr; }
+    .tab-btn span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN (shown until API URL is configured) -->
+<div id="setupScreen">
+  <div class="setup-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+      <i class="ti ti-church" style="font-size:28px;color:var(--accent)"></i>
+      <h2>Connect to Google Sheets</h2>
+    </div>
+    <p>This app saves all attendance to a Google Sheet — free, works on any device, and you can share it with your church leaders. Follow these steps once:</p>
+
+    <div class="step"><div class="step-num">1</div><p>Open <strong>Google Sheets</strong> and create a new spreadsheet. Name it <em>"Church Attendance"</em>.</p></div>
+    <div class="step"><div class="step-num">2</div><p>Click <strong>Extensions → Apps Script</strong>. Delete everything in the editor.</p></div>
+    <div class="step"><div class="step-num">3</div><p>Open the file <code>google-apps-script.js</code> included with this app. Copy its entire contents and paste into Apps Script.</p></div>
+    <div class="step"><div class="step-num">4</div><p>Click <strong>Deploy → New deployment</strong>. Choose type <em>Web app</em>. Set "Who has access" to <em>Anyone</em>. Click Deploy and copy the URL.</p></div>
+    <div class="step"><div class="step-num">5</div><p>Paste that URL below and click Connect.</p></div>
+
+    <div style="margin-top:20px;">
+      <label>Your Apps Script Web App URL</label>
+      <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom:10px;" />
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="connectAPI()">
+        <i class="ti ti-plug-connected"></i> Connect & start
+      </button>
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">
+      <i class="ti ti-lock" style="font-size:13px;vertical-align:-2px"></i> Your data goes only to your own Google Sheet.
+    </p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+  <header>
+    <div class="logo"><i class="ti ti-church"></i> Church Attendance</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="date" id="sessionDate" style="width:auto;font-size:13px;padding:6px 10px;" />
+      <button class="btn btn-primary btn-sm" onclick="saveSession()" id="saveBtn">
+        <i class="ti ti-device-floppy"></i> <span>Save</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- SYNC STATUS -->
+    <div id="syncBanner" style="display:none;background:var(--amber-light);border:1px solid #fde68a;border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:14px;font-size:13px;color:var(--amber);display:flex;align-items:center;gap:7px;">
+      <i class="ti ti-cloud-upload"></i> <span id="syncMsg">Syncing…</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('rollcall',this)"><i class="ti ti-clipboard-list"></i><span>Roll call</span></button>
+      <button class="tab-btn" onclick="switchTab('reports',this)"><i class="ti ti-chart-bar"></i><span>Reports</span></button>
+      <button class="tab-btn" onclick="switchTab('absentees',this)"><i class="ti ti-alert-circle"></i><span>Alerts</span></button>
+      <button class="tab-btn" onclick="switchTab('members',this)"><i class="ti ti-user-search"></i><span>Members</span></button>
+      <button class="tab-btn" onclick="switchTab('manage',this)"><i class="ti ti-settings"></i><span>Manage</span></button>
+    </div>
+
+    <!-- ROLL CALL TAB -->
+    <div id="tab-rollcall">
+      <div class="metrics-grid">
+        <div class="metric-box"><div class="lbl">Class</div><div class="val" id="rc-class" style="font-size:16px;margin-top:2px;">—</div></div>
+        <div class="metric-box"><div class="lbl">Total</div><div class="val" id="rc-total">0</div></div>
+        <div class="metric-box"><div class="lbl">Present</div><div class="val" style="color:var(--green)" id="rc-present">0</div></div>
+        <div class="metric-box"><div class="lbl">Absent</div><div class="val" style="color:var(--red)" id="rc-absent">0</div></div>
+        <div class="metric-box"><div class="lbl">Rate</div><div class="val" id="rc-rate">—</div></div>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px;">
+        <select id="classSelect" onchange="renderRollCall()" style="flex:1;min-width:130px;"></select>
+        <button class="btn btn-sm btn-success" onclick="markAll('present')"><i class="ti ti-check"></i> All present</button>
+        <button class="btn btn-sm btn-danger"  onclick="markAll('absent')"><i class="ti ti-x"></i> All absent</button>
+      </div>
+      <div class="card" style="padding:12px 16px;"><div id="rollCallList"></div></div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div id="tab-reports" style="display:none;">
+      <div class="btn-row" style="margin-bottom:14px;">
+        <label style="margin:0;font-size:13px;white-space:nowrap;">Filter:</label>
+        <select id="reportFilter" onchange="renderReports()" style="flex:1;"></select>
+      </div>
+      <div class="metrics-grid" id="reportMetrics"></div>
+      <div class="card">
+        <p class="sec-title">Attendance rate — last 8 sessions</p>
+        <div style="position:relative;height:230px;"><canvas id="trendChart" role="img" aria-label="Line chart of attendance rate per class over recent sessions"></canvas></div>
+      </div>
+      <div class="card">
+        <p class="sec-title">Latest session — present vs absent by class</p>
+        <div style="position:relative;height:200px;"><canvas id="classChart" role="img" aria-label="Bar chart showing present and absent per class for the latest session"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ABSENTEES TAB -->
+    <div id="tab-absentees" style="display:none;">
+      <div class="card">
+        <p class="sec-title">Consecutive absence alerts (2+ sessions missed)</p>
+        <div id="absenteeList"></div>
+      </div>
+      <div class="card">
+        <p class="sec-title">All-time attendance rate — all members</p>
+        <div id="memberRates"></div>
+      </div>
+    </div>
+
+    <!-- MEMBER HISTORY TAB -->
+    <div id="tab-members" style="display:none;">
+      <div class="btn-row" style="margin-bottom:12px;">
+        <input type="text" id="memberSearch" placeholder="Search name…" oninput="renderMemberHistory()" style="flex:1;" />
+        <select id="memberClassFilter" onchange="renderMemberHistory()" style="width:150px;"></select>
+      </div>
+      <div id="memberHistoryList"></div>
+    </div>
+
+    <!-- MANAGE TAB -->
+    <div id="tab-manage" style="display:none;">
+      <div class="form-row">
+        <div class="card">
+          <p class="sec-title">Add class</p>
+          <div class="form-field"><label>Class name</label><input type="text" id="newClassName" placeholder="e.g. GA Class" /></div>
+          <div class="form-field">
+            <label>Colour</label>
+            <select id="newClassColor">
+              <option value="#2563eb">Blue</option><option value="#16a34a">Green</option>
+              <option value="#7c3aed">Purple</option><option value="#dc2626">Red</option>
+              <option value="#d97706">Amber</option><option value="#0891b2">Cyan</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="addClass()"><i class="ti ti-plus"></i> Add class</button>
+        </div>
+        <div class="card">
+          <p class="sec-title">Add department</p>
+          <div class="form-field"><label>Department name</label><input type="text" id="newDeptName" placeholder="e.g. Ushers" /></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="addDept()"><i class="ti ti-plus"></i> Add department</button>
+          <div style="margin-top:14px;">
+            <p class="sec-title">Existing departments</p>
+            <div id="deptList" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="sec-title">Add member</p>
+        <div class="form-row">
+          <div class="form-field" style="margin:0;"><label>Full name</label><input type="text" id="newMemberName" placeholder="Full name" /></div>
+          <div class="form-field" style="margin:0;"><label>Class</label><select id="newMemberClass"></select></div>
+        </div>
+        <div class="form-field" style="margin-top:10px;">
+          <label>Departments <span style="font-weight:400;color:var(--muted)">(tap to select)</span></label>
+          <div id="deptChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;" onclick="addMember()"><i class="ti ti-user-plus"></i> Add member</button>
+      </div>
+      <div class="card">
+        <p class="sec-title">Classes & rosters</p>
+        <div id="classOverview"></div>
+      </div>
+      <div class="card" style="margin-top:0;">
+        <p class="sec-title" style="margin-bottom:8px;">Settings</p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <label style="margin:0;flex:1;min-width:200px;font-size:13px;color:var(--muted);">Connected Google Sheet URL:</label>
+          <input type="url" id="apiUrlDisplay" style="flex:2;min-width:200px;font-size:12px;" />
+          <button class="btn btn-sm" onclick="updateApiUrl()"><i class="ti ti-refresh"></i> Update</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let API_URL = localStorage.getItem('church_api_url') || '';
+
+let state = {
+  classes: [
+    {id:'c1',name:'GA Class',color:'#2563eb'},
+    {id:'c2',name:'Twi Class',color:'#16a34a'},
+    {id:'c3',name:'Ewe Class',color:'#7c3aed'},
+    {id:'c4',name:'Youth Class',color:'#dc2626'},
+    {id:'c5',name:'Children',color:'#0891b2'},
+    {id:'c6',name:'Elders',color:'#d97706'}
+  ],
+  departments: [
+    {id:'d1',name:'Ushers'},{id:'d2',name:'Choristers'},{id:'d3',name:'Youth Choir'},
+    {id:'d4',name:'Audio Visual'},{id:'d5',name:'Finance Team'},{id:'d6',name:'Podium Directors'}
+  ],
+  members: [],
+  sessions: [],
+  current: {},
+  selectedDepts: []
+};
+
+/* ═══════════════════════════════════════════
+   API — Google Apps Script
+═══════════════════════════════════════════ */
+async function apiCall(action, payload={}) {
+  if (!API_URL) return null;
+  showSync('Syncing with Google Sheets…');
+  try {
+    const body = JSON.stringify({action, ...payload});
+    const res = await fetch(API_URL, {method:'POST', body});
+    const data = await res.json();
+    hideSync();
+    return data;
+  } catch(e) {
+    showSync('Could not reach Google Sheets. Working offline.', true);
+    setTimeout(hideSync, 3000);
+    return null;
+  }
+}
+
+async function loadFromSheet() {
+  const data = await apiCall('load');
+  if (!data) return;
+  if (data.classes && data.classes.length)     state.classes     = data.classes;
+  if (data.departments && data.departments.length) state.departments = data.departments;
+  if (data.members && data.members.length)     state.members     = data.members;
+  if (data.sessions && data.sessions.length)   state.sessions    = data.sessions;
+  initCurrent();
+  refreshAll();
+  toast('Data loaded from Google Sheets');
+}
+
+async function saveSession() {
+  const date = document.getElementById('sessionDate').value;
+  if (!date) { toast('Pick a date first'); return; }
+  const attendance = {...state.current};
+  const rec = {date, attendance};
+  const i = state.sessions.findIndex(s => s.date === date);
+  if (i >= 0) state.sessions[i] = rec; else state.sessions.push(rec);
+  state.sessions.sort((a,b) => a.date.localeCompare(b.date));
+
+  const result = await apiCall('saveSession', {date, attendance});
+  if (result) toast('Session saved to Google Sheets ✓');
+  else { saveLocal(); toast('Saved locally (offline)'); }
+  renderReports(); renderAbsentees(); renderMemberHistory();
+}
+
+/* ═══════════════════════════════════════════
+   LOCAL STORAGE FALLBACK
+═══════════════════════════════════════════ */
+function saveLocal() {
+  localStorage.setItem('church_data', JSON.stringify({
+    classes: state.classes,
+    departments: state.departments,
+    members: state.members,
+    sessions: state.sessions
+  }));
+}
+function loadLocal() {
+  const raw = localStorage.getItem('church_data');
+  if (!raw) return;
+  const d = JSON.parse(raw);
+  if (d.classes) state.classes = d.classes;
+  if (d.departments) state.departments = d.departments;
+  if (d.members) state.members = d.members;
+  if (d.sessions) state.sessions = d.sessions;
+}
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+const AV_BG  = ['#eff5ff','#f0fdf4','#f5f3ff','#fff1f2','#ecfeff','#fffbeb'];
+const AV_TX  = ['#1d4ed8','#15803d','#6d28d9','#b91c1c','#0e7490','#b45309'];
+const DT_BG  = ['#eff5ff','#f5f3ff','#f0fdf4','#fffbeb','#fff1f2','#ecfeff'];
+const DT_TX  = ['#1d4ed8','#6d28d9','#15803d','#b45309','#b91c1c','#0e7490'];
+
+function clsIdx(id) { return state.classes.findIndex(c => c.id === id); }
+function inits(n)   { return n.trim().split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+function classOf(id){ return state.classes.find(c => c.id === id); }
+function deptOf(id) { return state.departments.find(d => d.id === id); }
+function deptIdx(id){ return state.departments.findIndex(d => d.id === id); }
+
+function initCurrent() {
+  state.members.forEach(m => { if (state.current[m.id] === undefined) state.current[m.id] = null; });
+}
+
+function initDate() {
+  const d = new Date();
+  document.getElementById('sessionDate').value = d.toISOString().split('T')[0];
+}
+
+function populateSel(id, includeAll=false, includeDepts=false) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = '';
+  if (includeAll) {
+    const o = document.createElement('option'); o.value = 'class:all'; o.textContent = 'All classes'; el.appendChild(o);
+    if (includeDepts) {
+      const g = document.createElement('optgroup'); g.label = 'Departments';
+      state.departments.forEach(d => { const o = document.createElement('option'); o.value = 'dept:'+d.id; o.textContent = d.name; g.appendChild(o); });
+      el.appendChild(g);
+    }
+  }
+  state.classes.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; el.appendChild(o); });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function showSync(msg, err=false) {
+  const b = document.getElementById('syncBanner');
+  b.style.display = 'flex';
+  b.style.background = err ? '#fff1f2' : '#fffbeb';
+  b.style.borderColor = err ? '#fecaca' : '#fde68a';
+  b.style.color = err ? 'var(--red)' : 'var(--amber)';
+  document.getElementById('syncMsg').textContent = msg;
+}
+function hideSync() { document.getElementById('syncBanner').style.display = 'none'; }
+
+/* ═══════════════════════════════════════════
+   ROLL CALL
+═══════════════════════════════════════════ */
+function renderRollCall() {
+  const cid = document.getElementById('classSelect').value;
+  const members = state.members.filter(m => m.classId === cid);
+  const cls = classOf(cid); const ci = clsIdx(cid);
+  const present = members.filter(m => state.current[m.id] === 'present').length;
+  const absent  = members.filter(m => state.current[m.id] === 'absent').length;
+  document.getElementById('rc-class').textContent   = cls ? cls.name : '—';
+  document.getElementById('rc-total').textContent   = members.length;
+  document.getElementById('rc-present').textContent = present;
+  document.getElementById('rc-absent').textContent  = absent;
+  document.getElementById('rc-rate').textContent    = members.length ? Math.round(present/members.length*100)+'%' : '—';
+
+  const list = document.getElementById('rollCallList');
+  if (!members.length) { list.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:13px;padding:1.5rem 0;">No members in this class. Go to Manage to add some.</p>'; return; }
+
+  list.innerHTML = members.map(m => {
+    const st = state.current[m.id];
+    const dTags = (m.depts||[]).map(did => {
+      const d = deptOf(did); const di = deptIdx(did)%6;
+      return d ? `<span class="tag" style="background:${DT_BG[di]};color:${DT_TX[di]}">${d.name}</span>` : '';
+    }).join('');
+    return `<div class="member-row">
+      <div class="avatar" style="background:${AV_BG[ci%6]};color:${AV_TX[ci%6]}">${inits(m.name)}</div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-meta">${dTags || '<span style="font-size:10px;color:var(--muted)">No dept</span>'}</div>
+      </div>
+      <button class="att-btn ${st||''}" onclick="toggleMember('${m.id}')">
+        ${st==='present'?'<i class="ti ti-check"></i> Present':st==='absent'?'<i class="ti ti-x"></i> Absent':'Mark'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function toggleMember(id) {
+  state.current[id] = state.current[id] === 'present' ? 'absent' : 'present';
+  renderRollCall();
+  saveLocal();
+}
+function markAll(st) {
+  const cid = document.getElementById('classSelect').value;
+  state.members.filter(m => m.classId === cid).forEach(m => { state.current[m.id] = st; });
+  renderRollCall(); saveLocal();
+}
+
+/* ═══════════════════════════════════════════
+   REPORTS
+═══════════════════════════════════════════ */
+let tChart, cChart;
+function renderReports() {
+  populateSel('reportFilter', true, true);
+  const filter = document.getElementById('reportFilter').value;
+  const sessions = state.sessions.slice(-8);
+  const metrics = document.getElementById('reportMetrics');
+
+  if (!sessions.length) {
+    metrics.innerHTML = '<p style="font-size:13px;color:var(--muted);grid-column:1/-1;">No sessions saved yet. Mark roll call and save.</p>'; return;
+  }
+
+  function membersFor(f) {
+    if (f === 'class:all') return state.members;
+    if (f.startsWith('class:')) return state.members.filter(m => m.classId === f.slice(6));
+    if (f.startsWith('dept:'))  return state.members.filter(m => (m.depts||[]).includes(f.slice(5)));
+    return state.members;
+  }
+  const fm = membersFor(filter);
+  const allP = sessions.flatMap(s => fm.filter(m => s.attendance[m.id]==='present')).length;
+  const allT = sessions.flatMap(s => fm.map(m => s.attendance[m.id]).filter(Boolean)).length;
+  const avg  = allT ? Math.round(allP/allT*100) : 0;
+
+  metrics.innerHTML = `
+    <div class="metric-box"><div class="lbl">Sessions</div><div class="val">${sessions.length}</div></div>
+    <div class="metric-box"><div class="lbl">Avg rate</div><div class="val">${avg}%</div></div>
+    <div class="metric-box"><div class="lbl">Members</div><div class="val">${fm.length}</div></div>
+  `;
+
+  if (tChart) tChart.destroy();
+  if (cChart) cChart.destroy();
+  const labels = sessions.map(s => s.date.slice(5));
+
+  tChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels, datasets: state.classes.map(cls => ({
+      label: cls.name,
+      data: sessions.map(s => {
+        const cm = state.members.filter(m => m.classId === cls.id);
+        const p  = cm.filter(m => s.attendance[m.id]==='present').length;
+        return cm.length ? Math.round(p/cm.length*100) : 0;
+      }),
+      borderColor: cls.color, backgroundColor: cls.color+'22',
+      tension: .3, fill: false, pointRadius: 4
+    }))},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} }}},
+      scales:{ y:{ min:0, max:100, ticks:{ callback: v => v+'%' }}}}
+  });
+
+  const latest = sessions[sessions.length-1];
+  cChart = new Chart(document.getElementById('classChart'), {
+    type: 'bar',
+    data: { labels: state.classes.map(c=>c.name), datasets:[
+      { label:'Present', data: state.classes.map(cls => state.members.filter(m=>m.classId===cls.id&&latest.attendance[m.id]==='present').length), backgroundColor: state.classes.map(c=>c.color+'cc') },
+      { label:'Absent',  data: state.classes.map(cls => state.members.filter(m=>m.classId===cls.id&&latest.attendance[m.id]==='absent').length),  backgroundColor: state.classes.map(c=>c.color+'33') }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} }}},
+      scales:{ x:{ ticks:{ font:{size:11} }}, y:{ ticks:{ stepSize:1 }}}}
+  });
+}
+
+/* ═══════════════════════════════════════════
+   ABSENTEES
+═══════════════════════════════════════════ */
+function renderAbsentees() {
+  const aList = document.getElementById('absenteeList');
+  const rList = document.getElementById('memberRates');
+  if (!state.sessions.length) {
+    aList.innerHTML = '<p style="font-size:13px;color:var(--muted);">No sessions recorded yet.</p>';
+    rList.innerHTML = ''; return;
+  }
+  const alerts = state.members.map(m => {
+    const recent = state.sessions.slice(-3).map(s => s.attendance[m.id]);
+    const streak = recent.filter(v => v==='absent').length;
+    return { m, streak, cls: classOf(m.classId), ci: clsIdx(m.classId) };
+  }).filter(x => x.streak >= 2).sort((a,b) => b.streak-a.streak);
+
+  aList.innerHTML = alerts.length
+    ? alerts.map(({m,streak,cls,ci}) => `<div class="member-row">
+        <div class="avatar" style="background:${AV_BG[ci%6]};color:${AV_TX[ci%6]};width:32px;height:32px;">${inits(m.name)}</div>
+        <div class="member-info"><div class="member-name">${m.name}</div><div style="font-size:11px;color:var(--muted)">${cls?cls.name:''}</div></div>
+        <span class="tag" style="background:var(--red-light);color:var(--red)">${streak} missed</span>
+      </div>`).join('')
+    : '<p style="font-size:13px;color:var(--green);"><i class="ti ti-circle-check"></i> No consecutive absentees — great!</p>';
+
+  const rates = state.members.map(m => {
+    const ss = state.sessions.filter(s => s.attendance[m.id]);
+    const p  = ss.filter(s => s.attendance[m.id]==='present').length;
+    const r  = ss.length ? Math.round(p/ss.length*100) : null;
+    return {m, r, cls:classOf(m.classId), ci:clsIdx(m.classId)};
+  }).filter(x => x.r!==null).sort((a,b) => a.r-b.r);
+
+  rList.innerHTML = rates.map(({m,r,cls,ci}) => {
+    const col = r>=75?'var(--green)':r>=50?'var(--amber)':'var(--red)';
+    return `<div class="member-row">
+      <div class="avatar" style="background:${AV_BG[ci%6]};color:${AV_TX[ci%6]};width:32px;height:32px;">${inits(m.name)}</div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:${Math.max(r,2)}%;background:${col}"></div></div>
+      </div>
+      <span style="font-size:14px;font-weight:600;color:${col};min-width:38px;text-align:right">${r}%</span>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   MEMBER HISTORY
+═══════════════════════════════════════════ */
+function renderMemberHistory() {
+  const search = (document.getElementById('memberSearch').value||'').toLowerCase();
+  const cf     = document.getElementById('memberClassFilter').value;
+  let members  = state.members;
+  if (cf !== 'all') members = members.filter(m => m.classId === cf);
+  if (search)       members = members.filter(m => m.name.toLowerCase().includes(search));
+
+  const container = document.getElementById('memberHistoryList');
+  if (!members.length) { container.innerHTML = '<p style="font-size:13px;color:var(--muted);">No members found.</p>'; return; }
+
+  container.innerHTML = members.map(m => {
+    const cls = classOf(m.classId); const ci = clsIdx(m.classId);
+    const dTags = (m.depts||[]).map(did => { const d=deptOf(did); const di=deptIdx(did)%6; return d?`<span class="tag" style="background:${DT_BG[di]};color:${DT_TX[di]}">${d.name}</span>`:'' }).join('');
+    const hist = state.sessions.map(s => {
+      const st = s.attendance[m.id];
+      const c  = st==='present'?'P':st==='absent'?'A':'U';
+      return `<span class="hist-dot ${c}" title="${s.date}: ${st||'not recorded'}">${c==='U'?'–':c}</span>`;
+    }).join('');
+    const ss = state.sessions.filter(s => s.attendance[m.id]);
+    const p  = ss.filter(s => s.attendance[m.id]==='present').length;
+    const r  = ss.length ? Math.round(p/ss.length*100) : null;
+    const col = r===null?'var(--muted)':r>=75?'var(--green)':r>=50?'var(--amber)':'var(--red)';
+    return `<div class="card" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div class="avatar" style="background:${AV_BG[ci%6]};color:${AV_TX[ci%6]}">${inits(m.name)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:600;">${m.name}</div>
+          <div class="member-meta">
+            <span class="tag" style="background:${cls?cls.color+'22':'var(--surface2)'};color:${cls?cls.color:'var(--muted)'}">${cls?cls.name:'—'}</span>
+            ${dTags}
+          </div>
+        </div>
+        ${r!==null?`<span style="font-size:18px;font-weight:600;color:${col}">${r}%</span>`:''}
+      </div>
+      ${state.sessions.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">${hist}</div>`
+        : '<p style="font-size:11px;color:var(--muted)">No sessions yet.</p>'}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   MANAGE
+═══════════════════════════════════════════ */
+function renderDeptList() {
+  document.getElementById('deptList').innerHTML = state.departments.map(d =>
+    `<span class="tag" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:4px 10px;">${d.name}</span>`
+  ).join('');
+}
+function renderDeptChips() {
+  document.getElementById('deptChips').innerHTML = state.departments.map(d =>
+    `<button class="tag ${state.selectedDepts.includes(d.id)?'sel':''}" style="background:${state.selectedDepts.includes(d.id)?'var(--accent-light)':'var(--surface2)'};color:${state.selectedDepts.includes(d.id)?'var(--accent)':'var(--muted)'};border:1px solid ${state.selectedDepts.includes(d.id)?'#bfdbfe':'var(--border)'};cursor:pointer;padding:5px 11px;" onclick="toggleDept('${d.id}')">${d.name}</button>`
+  ).join('');
+}
+function toggleDept(id) {
+  const i = state.selectedDepts.indexOf(id);
+  if (i>=0) state.selectedDepts.splice(i,1); else state.selectedDepts.push(id);
+  renderDeptChips();
+}
+function renderManage() {
+  populateSel('newMemberClass');
+  renderDeptList(); renderDeptChips();
+  document.getElementById('apiUrlDisplay').value = API_URL;
+  document.getElementById('classOverview').innerHTML = state.classes.map(cls => {
+    const m = state.members.filter(x => x.classId===cls.id);
+    return `<div style="margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+        <span style="width:9px;height:9px;border-radius:50%;background:${cls.color};display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;">${cls.name}</span>
+        <span class="tag" style="background:var(--accent-light);color:var(--accent)">${m.length} members</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${m.map(x=>{
+          const dNames=(x.depts||[]).map(did=>{const d=deptOf(did);return d?d.name:''}).filter(Boolean).join(', ');
+          return`<span class="tag" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:4px 9px;" title="${dNames||'No departments'}">${x.name}</span>`;
+        }).join('')||'<span style="font-size:12px;color:var(--muted)">No members yet</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addClass() {
+  const n = document.getElementById('newClassName').value.trim();
+  const c = document.getElementById('newClassColor').value;
+  if (!n) { toast('Enter a class name'); return; }
+  const cls = {id:'c'+Date.now(), name:n, color:c};
+  state.classes.push(cls);
+  document.getElementById('newClassName').value = '';
+  populateSel('classSelect'); populateSel('reportFilter',true,true);
+  renderManage(); saveLocal();
+  await apiCall('saveConfig', {classes:state.classes, departments:state.departments});
+  toast('Class added');
+}
+async function addDept() {
+  const n = document.getElementById('newDeptName').value.trim();
+  if (!n) { toast('Enter a department name'); return; }
+  state.departments.push({id:'d'+Date.now(), name:n});
+  document.getElementById('newDeptName').value = '';
+  renderManage(); saveLocal();
+  await apiCall('saveConfig', {classes:state.classes, departments:state.departments});
+  toast('Department added');
+}
+async function addMember() {
+  const n   = document.getElementById('newMemberName').value.trim();
+  const cid = document.getElementById('newMemberClass').value;
+  if (!n||!cid) { toast('Enter name and select class'); return; }
+  const member = {id:'m'+Date.now(), name:n, classId:cid, depts:[...state.selectedDepts]};
+  state.members.push(member);
+  state.current[member.id] = null;
+  state.selectedDepts = [];
+  document.getElementById('newMemberName').value = '';
+  renderManage(); renderRollCall(); populateSel('memberClassFilter',true); renderMemberHistory();
+  saveLocal();
+  await apiCall('saveMember', {member});
+  toast('Member added');
+}
+
+/* ═══════════════════════════════════════════
+   SETUP & CONNECT
+═══════════════════════════════════════════ */
+function connectAPI() {
+  const url = document.getElementById('apiUrlInput').value.trim();
+  if (!url || !url.startsWith('https://script.google.com')) {
+    toast('Please paste a valid Apps Script URL'); return;
+  }
+  API_URL = url;
+  localStorage.setItem('church_api_url', url);
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  boot();
+}
+function updateApiUrl() {
+  const url = document.getElementById('apiUrlDisplay').value.trim();
+  API_URL = url;
+  localStorage.setItem('church_api_url', url);
+  toast('URL updated');
+}
+
+/* ═══════════════════════════════════════════
+   TABS & BOOT
+═══════════════════════════════════════════ */
+function switchTab(t, el) {
+  document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  ['rollcall','reports','absentees','members','manage'].forEach(x => {
+    document.getElementById('tab-'+x).style.display = x===t?'block':'none';
+  });
+  if (t==='reports')  renderReports();
+  if (t==='absentees') renderAbsentees();
+  if (t==='members')  { populateSel('memberClassFilter',true); renderMemberHistory(); }
+  if (t==='manage')   renderManage();
+}
+
+function refreshAll() {
+  populateSel('classSelect');
+  populateSel('reportFilter',true,true);
+  populateSel('memberClassFilter',true);
+  populateSel('newMemberClass');
+  renderRollCall(); renderManage();
+}
+
+function boot() {
+  initDate(); loadLocal(); initCurrent(); refreshAll();
+  if (API_URL) loadFromSheet();
+}
+
+/* start */
+if (API_URL) {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  boot();
+}
+</script>
+</body>
+</html>
