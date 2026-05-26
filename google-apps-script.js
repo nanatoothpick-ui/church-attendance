@@ -24,6 +24,7 @@ function doPost(e) {
       case 'load':        result = loadAll();                    break;
       case 'saveSession': result = saveSession(data);            break;
       case 'saveMember':  result = saveMember(data.member);      break;
+      case 'deleteMember': result = deleteMember(data.memberId); break;
       case 'saveConfig':  result = saveConfig(data);             break;
       default:            result = {error: 'Unknown action'};
     }
@@ -128,6 +129,35 @@ function saveSession(data) {
   if (!found) sessionSheet.appendRow([data.date, present, absent]);
 
   return {success: true, date: data.date, rows: rows.length};
+}
+
+// ── DELETE MEMBER ────────────────────────────────────────────
+function deleteMember(memberId) {
+  ensureSheetsExist();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  // Remove from Members sheet
+  const memberSheet = ss.getSheetByName(SHEETS.MEMBERS);
+  const memberData  = memberSheet.getDataRange().getValues();
+  for (let i = memberData.length - 1; i >= 1; i--) {
+    if (String(memberData[i][0]) === String(memberId)) {
+      memberSheet.deleteRow(i + 1);
+      break;
+    }
+  }
+
+  // Remove all attendance records for this member
+  const attSheet = ss.getSheetByName(SHEETS.ATTENDANCE);
+  const attData  = attSheet.getDataRange().getValues();
+  const rowsToDelete = [];
+  for (let i = attData.length - 1; i >= 1; i--) {
+    if (String(attData[i][1]) === String(memberId)) {
+      rowsToDelete.push(i + 1);
+    }
+  }
+  rowsToDelete.forEach(row => attSheet.deleteRow(row));
+
+  return {success: true, deleted: memberId};
 }
 
 // ── SAVE MEMBER ──────────────────────────────────────────────
