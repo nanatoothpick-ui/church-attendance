@@ -112,36 +112,10 @@
 </head>
 <body>
 
-<!-- SETUP SCREEN (shown until API URL is configured) -->
-<div id="setupScreen">
-  <div class="setup-card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <i class="ti ti-church" style="font-size:28px;color:var(--accent)"></i>
-      <h2>Connect to Google Sheets</h2>
-    </div>
-    <p>This app saves all attendance to a Google Sheet — free, works on any device, and you can share it with your church leaders. Follow these steps once:</p>
-
-    <div class="step"><div class="step-num">1</div><p>Open <strong>Google Sheets</strong> and create a new spreadsheet. Name it <em>"Church Attendance"</em>.</p></div>
-    <div class="step"><div class="step-num">2</div><p>Click <strong>Extensions → Apps Script</strong>. Delete everything in the editor.</p></div>
-    <div class="step"><div class="step-num">3</div><p>Open the file <code>google-apps-script.js</code> included with this app. Copy its entire contents and paste into Apps Script.</p></div>
-    <div class="step"><div class="step-num">4</div><p>Click <strong>Deploy → New deployment</strong>. Choose type <em>Web app</em>. Set "Who has access" to <em>Anyone</em>. Click Deploy and copy the URL.</p></div>
-    <div class="step"><div class="step-num">5</div><p>Paste that URL below and click Connect.</p></div>
-
-    <div style="margin-top:20px;">
-      <label>Your Apps Script Web App URL</label>
-      <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom:10px;" />
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="connectAPI()">
-        <i class="ti ti-plug-connected"></i> Connect & start
-      </button>
-    </div>
-    <p style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">
-      <i class="ti ti-lock" style="font-size:13px;vertical-align:-2px"></i> Your data goes only to your own Google Sheet.
-    </p>
-  </div>
-</div>
+<!-- Setup screen removed — API URL is pre-configured -->
 
 <!-- MAIN APP -->
-<div id="app" style="display:none;">
+<div id="app" style="display:flex;">
   <header>
     <div class="logo"><i class="ti ti-church"></i> Church Attendance</div>
     <div style="display:flex;align-items:center;gap:10px;">
@@ -284,7 +258,7 @@
 /* ═══════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════ */
-let API_URL = localStorage.getItem('church_api_url') || '';
+let API_URL = localStorage.getItem('church_api_url') || 'https://script.google.com/macros/s/AKfycbxaWs-Mr16k4rQhBwfQj21bfzUr_D0U-JAD7kHL11LPVC-dB_8IlIVrImAHexAtSfhLRQ/exec';
 
 let state = {
   classes: [
@@ -704,17 +678,6 @@ async function addMember() {
 /* ═══════════════════════════════════════════
    SETUP & CONNECT
 ═══════════════════════════════════════════ */
-function connectAPI() {
-  const url = document.getElementById('apiUrlInput').value.trim();
-  if (!url || !url.startsWith('https://script.google.com')) {
-    toast('Please paste a valid Apps Script URL'); return;
-  }
-  API_URL = url;
-  localStorage.setItem('church_api_url', url);
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  boot();
-}
 function updateApiUrl() {
   const url = document.getElementById('apiUrlDisplay').value.trim();
   API_URL = url;
@@ -750,12 +713,9 @@ function boot() {
   if (API_URL) loadFromSheet();
 }
 
-/* start */
-if (API_URL) {
-  document.getElementById('setupScreen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  boot();
-}
+/* start — API URL pre-configured, boot immediately */
+localStorage.setItem('church_api_url', API_URL);
+boot();
 </script>
 </body>
 </html>
